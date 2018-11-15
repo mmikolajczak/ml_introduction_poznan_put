@@ -1,3 +1,7 @@
+"""
+Text to speech service demo script, with command line interface.
+(This script assumes that the proper version of vlc is installed, and aws account/credentials are configured).
+"""
 try:
     import vlc
 except (ImportError, OSError):
@@ -33,16 +37,16 @@ def play_whole_audio(src):
 
 
 def text_to_speech(text: str):
-    '''
+    """
     :param text: text to synthesize
     :return: audio file in mp3 format (bytes)
-    '''
+    """
     client = boto3.client('polly')
     response = client.synthesize_speech(
         OutputFormat='mp3',
         Text=text,
         TextType='text',
-        VoiceId='Joey'#'Jacek'#'Salli'
+        VoiceId='Jacek'#'Salli'
     )
     if not 'AudioStream':
         raise IOError('Failed to download synthesized speech')
@@ -61,7 +65,7 @@ def cli(text):
             f.write(stream)
         play_whole_audio(tmp_outfile)
         os.remove(tmp_outfile)
-    except (IOError, RuntimeError) as e:  # tmp file read/write problem, or vlc error playing
+    except (IOError, RuntimeError) as e:  # tmp file read/write problem, or vlc error while playing
         print(e)
         exit(-1)
 

@@ -1,13 +1,22 @@
+"""
+Facial recognition/analysis demo script (using aws online service), with simple opencv interface.
+After running, you take a snap to analyse by pressing space, then after some time for request processing,
+the result will be visible on screen. Press space again to return exit snap results and return to camera mode.
+Press q to quit (not in results mode).
+(This script assumes that the camera is enabled, and aws account/credentials are configured).
+"""
 import boto3
 import cv2
 import os
 from pprint import pprint
 
 
-FEATURES_BLACKLIST = ("Landmarks", "Emotions", "Pose", "Quality", "BoundingBox", "Confidence")
-
-
 def detect_faces(image_blob, attributes=['ALL']):
+    """
+    :param image_blob: image (encoded in jpg/png) bytes representation
+    :param attributes: optional filter of analysis option
+    :return:
+    """
     rekognition = boto3.client("rekognition")
     response = rekognition.detect_faces(
         Image={
@@ -19,6 +28,11 @@ def detect_faces(image_blob, attributes=['ALL']):
 
 
 def img_matrix_to_bytes(img, tmp_img_file):
+    """
+    :param img: image opencv matrix (np.array)
+    :param tmp_img_file: name/path of temporary "buffer file" used to conversion
+    :return: bytes representation of image encoded in jpg/png (depends of extension of tmp_img_file)
+    """
     cv2.imwrite(tmp_img_file, img)
     with open(tmp_img_file, 'rb') as f:
         img_bytes = f.read()
@@ -30,7 +44,12 @@ def wait_for_space_pressed():
     while (cv2.waitKey(1) & 0xFF) != ord(' '): pass
 
 
-def draw_results(img, results):
+def draw_annotations(img, results):
+    """
+    :param img: image opencv matrix (np.array)
+    :param results: results of face analysis from AWS api response (dict)
+    :return: image opencv matrix, with annotations drawn (np.array)
+    """
     img = img.copy()
     img_h, img_w, _ = img.shape
     for face in results:
@@ -57,34 +76,25 @@ def draw_results(img, results):
     return img
 
 
-def img_from_disc_detection():
-    TEST_IMG_PATH = 'sandbox/test_1.jpg'
-    with open(TEST_IMG_PATH, 'rb') as f:
-        content = f.read()
-    faces = detect_faces(content)
-    for face in faces:
-        print(face)
-        print(face.keys())  # dict_keys(['BoundingBox', 'AgeRange', 'Smile', 'Eyeglasses', 'Sunglasses', 'Gender', 'Beard', 'Mustache', 'EyesOpen', 'MouthOpen', 'Emotions', 'Landmarks', 'Pose', 'Quality', 'Confidence'])
-
-
 def main():
     tmp_img_file = 'tmp.jpg'
+    window_name = 'whatever'
 
-    cv2.namedWindow('whatever', cv2.WINDOW_NORMAL)
-    cv2.setWindowProperty('whatever', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
     cap = cv2.VideoCapture(0)
     _, frame = cap.read()
     while True:
 
-        cv2.imshow('whatever', frame)
+        cv2.imshow(window_name, frame)
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             break
         if key == ord(' '):
             img_bytes = img_matrix_to_bytes(frame, tmp_img_file)
             faces = detect_faces(img_bytes)
-            frame_annotated = draw_results(frame, faces)
-            cv2.imshow('whatever', frame_annotated)
+            frame_annotated = draw_annotations(frame, faces)
+            cv2.imshow(window_name, frame_annotated)
             for face in faces:
                 pprint(face)
             wait_for_space_pressed()
