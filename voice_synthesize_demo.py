@@ -5,7 +5,7 @@ Text to speech service demo script, with command line interface.
 try:
     import vlc
 except (ImportError, OSError):
-    print('Vlc and|or it\' bindings not installed correctly')
+    print('Vlc and|or it\'s bindings not installed correctly')
     exit(-1)
 import boto3
 import time

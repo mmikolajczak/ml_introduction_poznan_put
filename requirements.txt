@@ -1,0 +1,5 @@
+jupyter
+boto3
+click
+opencv-python
+python-vlc
